@@ -1,0 +1,32 @@
+# IDE & Editor
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Maven & Build Artifacts
+target/
+**/target/
+*.class
+*.jar
+*.war
+
+# Node & Frontend
+node_modules/
+**/node_modules/
+.next/
+**/.next/
+build/
+**/build/
+.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment & Logs
+*.log
+.env
+.env*.local
+.system_generated/
+preview_md.py
