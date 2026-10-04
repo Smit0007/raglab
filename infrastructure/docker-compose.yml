@@ -1,0 +1,30 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/backend.Dockerfile
+    container_name: raglab-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+    depends_on:
+      - rcache
+
+  rcache:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/rcache.Dockerfile
+    container_name: raglab-rcache
+    ports:
+      - "6380:6380"
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: infrastructure/docker/frontend.Dockerfile
+    container_name: raglab-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend

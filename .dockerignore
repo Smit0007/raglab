@@ -1,0 +1,15 @@
+# Git & IDE
+.git
+.gitignore
+.idea
+.vscode
+
+# Node / Frontend (only ignore heavy cache/dependencies)
+frontend/node_modules
+frontend/.next
+frontend/build
+frontend/.turbo
+
+# Logs & temp
+**/*.log
+.system_generated
