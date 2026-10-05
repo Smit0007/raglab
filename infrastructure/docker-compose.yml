@@ -1,4 +1,22 @@
 services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: raglab-postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: raglab
+      POSTGRES_USER: raglab
+      POSTGRES_PASSWORD: raglab_dev_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raglab -d raglab"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ..
@@ -8,8 +26,14 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/raglab
+      - SPRING_DATASOURCE_USERNAME=raglab
+      - SPRING_DATASOURCE_PASSWORD=raglab_dev_password
     depends_on:
-      - rcache
+      postgres:
+        condition: service_healthy
+      rcache:
+        condition: service_started
 
   rcache:
     build:
@@ -27,4 +51,8 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+
+volumes:
+  postgres_data:
