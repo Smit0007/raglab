@@ -58,4 +58,22 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunkEnti
         @Param("topK") int topK,
         @Param("minScore") double minScore
     );
+
+    /**
+     * Exact exhaustive k-NN search (ignoring HNSW index) for recall benchmarking.
+     */
+    @Query(value = """
+        SET LOCAL enable_indexscan = off;
+        SELECT c.*
+        FROM document_chunks c
+        WHERE c.tenant_id = :tenantId
+          AND c.embedding IS NOT NULL
+        ORDER BY c.embedding <=> cast(:queryVector as vector) ASC
+        LIMIT :topK;
+        """, nativeQuery = true)
+    List<DocumentChunkEntity> findExactNearestChunks(
+        @Param("tenantId") UUID tenantId,
+        @Param("queryVector") String queryVector,
+        @Param("topK") int topK
+    );
 }
