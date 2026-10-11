@@ -1,10 +1,11 @@
 package com.raglab.rcache;
 
+import com.raglab.rcache.command.CommandDispatcher;
 import com.raglab.rcache.config.RCacheConfig;
+import com.raglab.rcache.server.RCacheServer;
+import com.raglab.rcache.storage.RCacheStorageEngine;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.ServerSocketChannel;
 
 /**
  * Main entry point for the standalone RCache Datastore server daemon.
@@ -13,21 +14,33 @@ public class RCacheApplication {
 
     public static void main(String[] args) {
         RCacheConfig config = RCacheConfig.defaultConfig();
-        System.out.println("Starting RCache server foundation on port " + config.port() + "...");
+        System.out.println("Starting RCache server daemon on port " + config.port() + "...");
 
-        try (ServerSocketChannel serverChannel = ServerSocketChannel.open()) {
-            serverChannel.bind(new InetSocketAddress(config.bindAddress(), config.port()));
-            System.out.println("RCache foundation TCP listener ready on " + config.bindAddress() + ":" + config.port());
+        RCacheStorageEngine storageEngine = new RCacheStorageEngine();
+        CommandDispatcher dispatcher = new CommandDispatcher(storageEngine);
+        RCacheServer server = new RCacheServer(config.bindAddress(), config.port(), dispatcher);
 
-            // Foundation listener loop (listens until shutdown)
-            while (!Thread.currentThread().isInterrupted()) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("RCache server daemon shutting down...");
+            server.close();
+            storageEngine.close();
+        }));
+
+        try {
+            server.start();
+            System.out.println("RCache server daemon ready on " + config.bindAddress() + ":" + config.port());
+
+            while (server.isRunning() && !Thread.currentThread().isInterrupted()) {
                 Thread.sleep(1000);
             }
         } catch (IOException e) {
-            System.err.println("RCache server error: " + e.getMessage());
+            System.err.println("RCache server startup error: " + e.getMessage());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println("RCache server shutting down.");
+        } finally {
+            server.close();
+            storageEngine.close();
+            System.out.println("RCache server stopped.");
         }
     }
 }
